@@ -23,8 +23,8 @@ if ($cart) {
         $stmt = $pdo->query("SELECT * FROM products WHERE id IN ({$ids}) AND is_active = 1");
         $cartProducts = $stmt->fetchAll();
         foreach ($cartProducts as $product) {
-            $quantity = $cart[$product['id']] ?? 0;
-            $total += $product['price'] * $quantity;
+            $qty = $cart[$product['id']] ?? 0;
+            $total += $product['price'] * $qty;
         }
     }
 }
@@ -34,7 +34,7 @@ if ($cart) {
 <div class="container py-5">
     <h1 class="mb-4"><?= __('cart') ?></h1>
 
-    <?php if (!$cartProducts): ?>
+    <?php if (empty($cartProducts)): ?>
         <div class="alert alert-info">Your cart is empty.</div>
     <?php else: ?>
         <form method="post">
@@ -62,12 +62,10 @@ if ($cart) {
                     </tbody>
                 </table>
             </div>
-
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <button type="submit" name="update_cart" class="btn btn-outline-primary">Update Cart</button>
                 <div class="h4 mb-0">Total: <?= pretty_money($total) ?></div>
             </div>
-
             <div class="mt-3">
                 <a href="/public/checkout.php" class="btn btn-success btn-lg"><?= __('checkout') ?></a>
             </div>

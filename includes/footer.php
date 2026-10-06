@@ -21,11 +21,9 @@
                 <li class="nav-item"><a class="nav-link" href="/public/products.php"><?= __('products') ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="/public/cart.php"><?= __('cart') ?></a></li>
             </ul>
-
             <div class="d-flex gap-2 align-items-center">
                 <a class="btn btn-sm btn-outline-light" href="?lang=en">EN</a>
                 <a class="btn btn-sm btn-outline-light" href="?lang=bn">বাংলা</a>
-
                 <?php if (is_logged_in()): ?>
                     <a class="btn btn-sm btn-primary" href="/public/account.php"><?= __('account') ?></a>
                     <a class="btn btn-sm btn-danger" href="/public/logout.php"><?= __('logout') ?></a>

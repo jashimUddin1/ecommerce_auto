@@ -5,34 +5,35 @@ A responsive multi-role e-commerce website built with PHP, MySQL, Bootstrap, and
 ## Features
 - Visitor, user, reseller, and admin panels
 - Bangla + English language toggle
-- Responsive mobile + desktop layout
-- Product, category, order, coupon, and role management
-- Basic authentication and role-based access control
-- MySQL database schema for a starter e-commerce app
+- Responsive mobile + desktop UI
+- Product, category, coupon, order, and role management
+- Basic authentication and role-based access structure
+- MySQL schema for core e-commerce entities
 
 ## Tech Stack
 - PHP 8+
 - MySQL
 - Bootstrap 5
-- HTML/CSS/JavaScript
+- HTML, CSS, JavaScript
 
-## Folder Structure
-- `config/` – app settings and database configuration
-- `includes/` – shared layouts and helpers
-- `public/` – customer-facing pages
-- `admin/` – admin dashboard pages
-- `assets/` – CSS and JS files
-- `db/` – SQL schema and seed data
+## Project Structure
+- `public/` – public storefront pages
+- `admin/` – admin dashboard and management screens
+- `includes/` – shared layout and auth helpers
+- `config/` – DB and app configuration
+- `db/` – SQL schema
+- `assets/` – CSS and JS
 
-## Setup
+## Quick Setup
 1. Create a MySQL database named `shopamar`.
 2. Import `db/schema.sql`.
-3. Update the database credentials in `config/database.php` if needed.
-4. Run the app from a PHP-enabled web server.
+3. Update database credentials in `config/database.php`.
+4. Put the project in a PHP-enabled web server root.
+5. Open `http://localhost/` or your configured virtual host.
 
-## Default Admin
+## Default Admin Login
 - Email: `admin@shopamar.com`
 - Password: `admin123`
 
 ## Notes
-This is a working starter project that matches your requested architecture and can be extended with payment gateways, invoice PDF generation, reseller commission logic, and real admin CRUD features.
+This is a solid starting scaffold for your project. You can extend it with payment integrations, invoice generation, image upload, and more advanced admin permissions.

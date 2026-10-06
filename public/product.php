@@ -16,8 +16,8 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
-$categoryStmt = $pdo->query("SELECT * FROM categories WHERE is_active = 1 ORDER BY name ASC");
-$categories = $categoryStmt->fetchAll();
+$catStmt = $pdo->query("SELECT * FROM categories WHERE is_active = 1 ORDER BY name ASC");
+$categories = $catStmt->fetchAll();
 ?>
 <?php require __DIR__ . '/../includes/header.php'; ?>
 
@@ -38,7 +38,7 @@ $categories = $categoryStmt->fetchAll();
         <div class="col-lg-9">
             <h2 class="mb-4"><?= __('products') ?></h2>
             <div class="row g-4">
-                <?php if ($products): ?>
+                <?php if (!empty($products)): ?>
                     <?php foreach ($products as $product): ?>
                         <div class="col-md-6 col-xl-4">
                             <div class="card-product h-100">

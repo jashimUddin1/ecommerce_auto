@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $role = 'user';
 
     if (!$name || !$email || !$password) {
         $error = 'Please fill in all fields.';
@@ -27,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'name' => $name,
                 'email' => $email,
                 'password' => password_hash($password, PASSWORD_DEFAULT),
-                'role' => 'user',
+                'role' => $role,
             ]);
             $success = 'Registration successful. You can now login.';
         }
@@ -41,9 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-lg-5">
             <div class="form-box">
                 <h2 class="mb-4"><?= __('register') ?></h2>
-                <?php if ($error): ?> <div class="alert alert-danger"><?= $error ?></div> <?php endif; ?>
-                <?php if ($success): ?> <div class="alert alert-success"><?= $success ?></div> <?php endif; ?>
-
+                <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
+                <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
                 <form method="post">
                     <div class="mb-3">
                         <label class="form-label">Full Name</label>

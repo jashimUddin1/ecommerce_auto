@@ -5,7 +5,7 @@ if (!is_logged_in()) {
     redirect('/public/login.php');
 }
 
-if (!user_has_role('ceo') && !is_admin_access()) {
+if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'support', 'data-entry', 'page-editor', 'sales-controller', 'inventory-manager'], true)) {
     redirect('/public/account.php');
 }
 

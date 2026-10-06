@@ -1,20 +1,40 @@
 <?php
-$host = '127.0.0.1';
-$db   = 'shopamar';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
+session_start();
 
-$dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
+if (!isset($_SESSION['lang'])) {
+    $_SESSION['lang'] = 'en';
+}
 
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+if (isset($_GET['lang'])) {
+    $_SESSION['lang'] = in_array($_GET['lang'], ['en', 'bn'], true) ? $_GET['lang'] : 'en';
+}
 
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    die('Database connection failed. Please create the `shopamar` database and import db/schema.sql.');
+require __DIR__ . '/database.php';
+require __DIR__ . '/lang.php';
+
+function redirect($path) {
+    header('Location: ' . $path);
+    exit;
+}
+
+function current_user() {
+    return $_SESSION['user'] ?? null;
+}
+
+function is_logged_in() {
+    return isset($_SESSION['user']);
+}
+
+function user_has_role($role) {
+    $user = current_user();
+    return $user && ($user['role'] === $role || $user['role'] === 'ceo');
+}
+
+function is_admin() {
+    $user = current_user();
+    return $user && in_array($user['role'], ['ceo', 'manager', 'support', 'data-entry', 'page-editor', 'sales-controller', 'inventory-manager'], true);
+}
+
+function pretty_money($amount) {
+    return '৳ ' . number_format((float) $amount, 2);
 }

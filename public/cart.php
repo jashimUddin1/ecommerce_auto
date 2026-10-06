@@ -31,7 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             <h1><?= htmlspecialchars($product['name']) ?></h1>
             <div class="price-tag fs-3 mb-3"><?= pretty_money($product['price']) ?></div>
             <p><?= htmlspecialchars($product['description'] ?? 'Product description') ?></p>
-            <div class="mb-3"><strong><?= __('stock') ?>:</strong> <?= (int)$product['stock'] ?></div>
+            <div class="mb-3">
+                <strong><?= __('stock') ?>:</strong> <?= (int)$product['stock'] ?>
+            </div>
             <form method="post">
                 <div class="input-group mb-3" style="max-width: 180px;">
                     <span class="input-group-text">Qty</span>

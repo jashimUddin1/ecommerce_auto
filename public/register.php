@@ -37,7 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-lg-5">
             <div class="form-box">
                 <h2 class="mb-4"><?= __('login') ?></h2>
-                <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
+                <?php if ($error): ?>
+                    <div class="alert alert-danger"><?= $error ?></div>
+                <?php endif; ?>
                 <form method="post">
                     <div class="mb-3">
                         <label class="form-label">Email</label>

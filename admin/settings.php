@@ -37,7 +37,7 @@ $coupons = $pdo->query("SELECT * FROM coupons ORDER BY created_at DESC")->fetchA
             <div class="table-responsive">
                 <table class="table table-bordered bg-white">
                     <thead>
-                        <tr><th>ID</th><th>Code</th><th>Type</th><th>Expiry</th></tr>
+                        <tr><th>ID</th><th>Code</th><th>Discount</th><th>Expiry</th></tr>
                     </thead>
                     <tbody>
                         <?php foreach ($coupons as $coupon): ?>

@@ -3,14 +3,14 @@ require __DIR__ . '/../config/init.php';
 if (!is_logged_in()) redirect('/public/login.php');
 if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'data-entry'], true)) redirect('/public/account.php');
 
-$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+$products = $pdo->query("SELECT * FROM products ORDER BY created_at DESC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Category Management</title>
+    <title>Product Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -22,8 +22,8 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
             <nav class="admin-nav">
                 <a href="/admin/index.php">Dashboard</a>
                 <a href="/admin/users.php">User Management</a>
-                <a href="/admin/products.php">Product Management</a>
-                <a class="active" href="/admin/categories.php">Category Management</a>
+                <a class="active" href="/admin/products.php">Product Management</a>
+                <a href="/admin/categories.php">Category Management</a>
                 <a href="/admin/orders.php">Order Management</a>
                 <a href="/admin/coupons.php">Coupon Management</a>
                 <a href="/admin/resellers.php">Reseller Management</a>
@@ -33,18 +33,20 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
             </nav>
         </aside>
         <main class="col-md-9 p-4">
-            <h2 class="mb-4">Category Management</h2>
+            <h2 class="mb-4">Product Management</h2>
             <div class="table-responsive">
                 <table class="table table-bordered bg-white">
                     <thead>
-                        <tr><th>ID</th><th>Name</th><th>Status</th></tr>
+                        <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th></tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($categories as $category): ?>
+                        <?php foreach ($products as $product): ?>
                             <tr>
-                                <td><?= (int)$category['id'] ?></td>
-                                <td><?= htmlspecialchars($category['name']) ?></td>
-                                <td><?= $category['is_active'] ? 'Active' : 'Inactive' ?></td>
+                                <td><?= (int)$product['id'] ?></td>
+                                <td><?= htmlspecialchars($product['name']) ?></td>
+                                <td><?= pretty_money($product['price']) ?></td>
+                                <td><?= (int)$product['stock'] ?></td>
+                                <td><?= htmlspecialchars($product['is_active'] ? 'Active' : 'Inactive') ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

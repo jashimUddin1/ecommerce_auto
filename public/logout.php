@@ -25,7 +25,6 @@ $orders = $stmt->fetchAll();
                 <p class="mb-0"><strong>Role:</strong> <?= htmlspecialchars($user['role']) ?></p>
             </div>
         </div>
-
         <div class="col-lg-8">
             <div class="sidebar-card">
                 <h5><?= __('orders') ?></h5>
@@ -34,7 +33,9 @@ $orders = $stmt->fetchAll();
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-bordered mb-0">
-                            <thead><tr><th>ID</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+                            <thead>
+                                <tr><th>ID</th><th>Total</th><th>Status</th><th>Date</th></tr>
+                            </thead>
                             <tbody>
                                 <?php foreach ($orders as $order): ?>
                                     <tr>

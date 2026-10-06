@@ -6,16 +6,16 @@ if (!is_logged_in()) {
 }
 
 $cart = $_SESSION['cart'] ?? [];
-$cartProducts = [];
 $total = 0;
+$cartProducts = [];
 
 if ($cart) {
     $ids = implode(',', array_map('intval', array_keys($cart)));
     $stmt = $pdo->query("SELECT * FROM products WHERE id IN ({$ids}) AND is_active = 1");
     $cartProducts = $stmt->fetchAll();
     foreach ($cartProducts as $product) {
-        $quantity = $cart[$product['id']] ?? 0;
-        $total += $product['price'] * $quantity;
+        $qty = $cart[$product['id']] ?? 0;
+        $total += $product['price'] * $qty;
     }
 }
 
@@ -35,14 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
         foreach ($cartProducts as $product) {
             $qty = $cart[$product['id']] ?? 0;
-            if ($qty <= 0) continue;
-
+            $price = $product['price'];
             $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (:order_id, :product_id, :quantity, :unit_price)");
             $stmt->execute([
                 'order_id' => $orderId,
                 'product_id' => $product['id'],
                 'quantity' => $qty,
-                'unit_price' => $product['price'],
+                'unit_price' => $price,
             ]);
         }
 
@@ -50,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $_SESSION['cart'] = [];
         $_SESSION['success'] = 'Order placed successfully.';
         redirect('/public/account.php');
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         $pdo->rollBack();
         $_SESSION['error'] = 'Order failed. Please try again.';
     }
@@ -61,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 <div class="container py-5">
     <h1 class="mb-4"><?= __('checkout') ?></h1>
 
-    <?php if (!$cartProducts): ?>
+    <?php if (empty($cartProducts)): ?>
         <div class="alert alert-info">Your cart is empty.</div>
     <?php else: ?>
         <div class="row g-4">
@@ -86,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             <div class="col-lg-4">
                 <div class="sidebar-card">
                     <h4>Order Summary</h4>
-                    <p class="mb-3">Total: <strong><?= pretty_money($total) ?></strong></p>
+                    <p>Total: <strong><?= pretty_money($total) ?></strong></p>
                     <form method="post">
                         <button type="submit" name="place_order" class="btn btn-success w-100">Place Order</button>
                     </form>
