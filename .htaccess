@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# Send everything to the public folder by default
+RewriteCond %{REQUEST_URI} !^/public/ [NC]
+RewriteCond %{REQUEST_URI} !^/admin/ [NC]
+RewriteRule ^(.*)$ /public/$1 [L]
