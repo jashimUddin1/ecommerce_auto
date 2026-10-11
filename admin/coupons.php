@@ -1,56 +1,64 @@
 <?php
 require __DIR__ . '/../config/init.php';
-if (!is_logged_in()) redirect('/public/login.php');
-if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'data-entry'], true)) redirect('/public/account.php');
 
-$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+if (!is_logged_in()) redirect('/public/login.php');
+if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'sales-controller'], true)) redirect('/public/account.php');
+
+$id = (int)($_GET['id'] ?? 0);
+if (!$id) redirect('/admin/orders.php');
+
+$stmt = $pdo->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
+$stmt->execute(['id' => $id]);
+$order = $stmt->fetch();
+if (!$order) redirect('/admin/orders.php');
+
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $status = trim($_POST['status'] ?? 'pending');
+    $allowed = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!in_array($status, $allowed, true)) {
+        $error = 'Invalid order status.';
+    } else {
+        $stmt = $pdo->prepare("UPDATE orders SET status = :status WHERE id = :id");
+        $stmt->execute(['status' => $status, 'id' => $id]);
+        $success = 'Order status updated.';
+        $order['status'] = $status;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Category Management</title>
+    <title>Update Order Status</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <aside class="col-md-3 bg-dark text-white min-vh-100 p-3">
-            <h3 class="mb-4">shopAmar</h3>
-            <nav class="admin-nav">
-                <a href="/admin/index.php">Dashboard</a>
-                <a href="/admin/users.php">User Management</a>
-                <a href="/admin/products.php">Product Management</a>
-                <a class="active" href="/admin/categories.php">Category Management</a>
-                <a href="/admin/orders.php">Order Management</a>
-                <a href="/admin/coupons.php">Coupon Management</a>
-                <a href="/admin/resellers.php">Reseller Management</a>
-                <a href="/admin/roles.php">Admin Role Management</a>
-                <a href="/admin/settings.php">Site Settings</a>
-                <a href="/public/logout.php">Logout</a>
-            </nav>
-        </aside>
-        <main class="col-md-9 p-4">
-            <h2 class="mb-4">Category Management</h2>
-            <div class="table-responsive">
-                <table class="table table-bordered bg-white">
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($categories as $category): ?>
-                            <tr>
-                                <td><?= (int)$category['id'] ?></td>
-                                <td><?= htmlspecialchars($category['name']) ?></td>
-                                <td><?= $category['is_active'] ? 'Active' : 'Inactive' ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div class="form-box">
+                <h2 class="mb-4">Update Order #<?= (int)$id ?></h2>
+                <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+                <?php if ($success): ?><div class="alert alert-success"><?= htmlspecialchars($success) ?></div><?php endif; ?>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <?php foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $statusOption): ?>
+                                <option value="<?= $statusOption ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= ucfirst($statusOption) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="/admin/orders.php" class="btn btn-secondary">Back</a>
+                </form>
             </div>
-        </main>
+        </div>
     </div>
 </div>
 </body>
