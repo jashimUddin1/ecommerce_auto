@@ -3,6 +3,17 @@ require_once __DIR__ . '/../includes/auth.php';
 requireRole(['admin', 'ceo', 'manager', 'support']);
 
 global $pdo;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id'])) {
+    $userId = (int) $_POST['user_id'];
+    $roleId = (int) $_POST['role_id'];
+    $status = $_POST['status'];
+
+    $stmt = $pdo->prepare('UPDATE users SET role_id = ?, status = ? WHERE id = ?');
+    $stmt->execute([$roleId, $status, $userId]);
+}
+
+$roles = $pdo->query('SELECT * FROM roles ORDER BY id ASC')->fetchAll();
 $stmt = $pdo->query(
     "SELECT u.*, r.name AS role_name
      FROM users u
@@ -33,6 +44,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>Phone</th>
                             <th>Role</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -44,6 +56,23 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td><?= htmlspecialchars($user['phone'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($user['role_name']) ?></td>
                                 <td><?= htmlspecialchars($user['status']) ?></td>
+                                <td>
+                                    <form method="POST" class="d-flex gap-2">
+                                        <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                                        <select name="role_id" class="form-select form-select-sm">
+                                            <?php foreach ($roles as $role): ?>
+                                                <option value="<?= $role['id'] ?>" <?= $role['id'] == $user['role_id'] ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($role['name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <select name="status" class="form-select form-select-sm">
+                                            <option value="active" <?= $user['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                                            <option value="banned" <?= $user['status'] === 'banned' ? 'selected' : '' ?>>Banned</option>
+                                        </select>
+                                        <button class="btn btn-primary btn-sm">Save</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

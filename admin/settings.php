@@ -7,13 +7,13 @@ global $pdo;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $siteName = trim($_POST['site_name']);
     $currency = trim($_POST['currency']);
+    $language = trim($_POST['language']);
 
-    $settings = [
+    foreach ([
         ['site_name', $siteName],
         ['currency', $currency],
-    ];
-
-    foreach ($settings as [$key, $value]) {
+        ['default_language', $language],
+    ] as [$key, $value]) {
         $check = $pdo->prepare('SELECT id FROM settings WHERE key_name = ?');
         $check->execute([$key]);
 
@@ -27,17 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$stmt = $pdo->query('SELECT * FROM settings');
-$settings = $stmt->fetchAll();
+$settings = $pdo->query('SELECT * FROM settings')->fetchAll();
 $siteName = '';
 $currency = '';
+$language = 'en';
 foreach ($settings as $setting) {
-    if ($setting['key_name'] === 'site_name') {
-        $siteName = $setting['value'];
-    }
-    if ($setting['key_name'] === 'currency') {
-        $currency = $setting['value'];
-    }
+    if ($setting['key_name'] === 'site_name') $siteName = $setting['value'];
+    if ($setting['key_name'] === 'currency') $currency = $setting['value'];
+    if ($setting['key_name'] === 'default_language') $language = $setting['value'];
 }
 
 require_once __DIR__ . '/../includes/header.php';
@@ -58,6 +55,14 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="mb-3">
                             <label>Currency</label>
                             <input type="text" name="currency" class="form-control" value="<?= htmlspecialchars($currency) ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Default Language</label>
+                            <select name="language" class="form-select">
+                                <option value="en" <?= $language === 'en' ? 'selected' : '' ?>>English</option>
+                                <option value="bn" <?= $language === 'bn' ? 'selected' : '' ?>>Bangla</option>
+                            </select>
                         </div>
 
                         <button class="btn btn-primary w-100">Save Settings</button>

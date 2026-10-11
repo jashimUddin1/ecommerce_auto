@@ -5,18 +5,28 @@ requireRole(['admin', 'ceo', 'manager', 'data-entry']);
 global $pdo;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $categoryId = $_POST['category_id'] ?? null;
-    $nameEn = trim($_POST['name_en']);
-    $nameBn = trim($_POST['name_bn']);
-    $price = $_POST['price'];
-    $stock = $_POST['stock'] ?? 0;
+    $action = $_POST['action'] ?? '';
 
-    if ($categoryId && $nameEn && $nameBn && $price) {
-        $slug = strtolower(str_replace(' ', '-', $nameEn));
-        $stmt = $pdo->prepare(
-            'INSERT INTO products (category_id, name_en, name_bn, slug, short_desc_en, short_desc_bn, price, stock, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "active")'
-        );
-        $stmt->execute([$categoryId, $nameEn, $nameBn, $slug, $nameEn, $nameBn, $price, $stock]);
+    if ($action === 'add') {
+        $categoryId = (int) ($_POST['category_id'] ?? 0);
+        $nameEn = trim($_POST['name_en']);
+        $nameBn = trim($_POST['name_bn']);
+        $price = $_POST['price'];
+        $stock = $_POST['stock'] ?? 0;
+
+        if ($categoryId && $nameEn && $nameBn && $price !== '') {
+            $slug = strtolower(str_replace(' ', '-', $nameEn));
+            $stmt = $pdo->prepare(
+                'INSERT INTO products (category_id, name_en, name_bn, slug, short_desc_en, short_desc_bn, price, stock, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "active")'
+            );
+            $stmt->execute([$categoryId, $nameEn, $nameBn, $slug, $nameEn, $nameBn, $price, $stock]);
+        }
+    }
+
+    if ($action === 'delete' && isset($_POST['product_id'])) {
+        $productId = (int) $_POST['product_id'];
+        $stmt = $pdo->prepare('DELETE FROM products WHERE id = ?');
+        $stmt->execute([$productId]);
     }
 }
 
@@ -35,6 +45,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="card-body">
                     <h4>Add Product</h4>
                     <form method="POST">
+                        <input type="hidden" name="action" value="add">
                         <div class="mb-3">
                             <label>Category</label>
                             <select name="category_id" class="form-select" required>
@@ -78,6 +89,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <th>Category</th>
                                     <th>Price</th>
                                     <th>Stock</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -88,6 +100,13 @@ require_once __DIR__ . '/../includes/header.php';
                                         <td><?= htmlspecialchars($product['category_name']) ?></td>
                                         <td>$<?= number_format((float) $product['price'], 2) ?></td>
                                         <td><?= $product['stock'] ?></td>
+                                        <td>
+                                            <form method="POST" onsubmit="return confirm('Delete this product?');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                                                <button class="btn btn-danger btn-sm">Delete</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
