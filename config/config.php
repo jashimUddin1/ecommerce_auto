@@ -36,3 +36,7 @@ function currentUserRole(): string {
 function currentUserId(): ?int {
     return $_SESSION['user_id'] ?? null;
 }
+
+function formatMoney(float $amount): string {
+    return '$' . number_format($amount, 2);
+}

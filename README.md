@@ -5,6 +5,8 @@ A PHP + MySQL + Bootstrap e-commerce application with:
 - Responsive mobile + desktop design
 - Visitor, User, Reseller, and Admin roles
 - Admin management modules for products, categories, orders, coupons, and roles
+- Invoice generation for user orders
+- Payment gateway configuration placeholders for COD, Bkash, Nagad, Rocket, and SSLCommerz
 
 ## Tech Stack
 - PHP
@@ -25,9 +27,13 @@ A PHP + MySQL + Bootstrap e-commerce application with:
 - `/public/products.php`
 - `/public/cart.php`
 - `/public/checkout.php`
+- `/public/invoice.php?id=1`
 - `/admin/dashboard.php`
 - `/user/dashboard.php`
 - `/reseller/dashboard.php`
+
+## Payment Note
+This phase includes payment method integration placeholders for COD and gateway-ready configuration in `config/payment.php`.
 
 ## Notes
 This is a starter implementation for the requested multi-role ecommerce platform.
