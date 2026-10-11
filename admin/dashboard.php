@@ -5,7 +5,7 @@ requireRole(['admin', 'ceo', 'manager', 'support', 'data-entry', 'sales-controll
 global $pdo;
 
 $totalUsers = (int) $pdo->query('SELECT COUNT(*) AS total FROM users')->fetch()['total'];
-totalProducts = $pdo->query('SELECT COUNT(*) AS total FROM products')->fetch()['total'];
+$totalProducts = (int) $pdo->query('SELECT COUNT(*) AS total FROM products')->fetch()['total'];
 $totalOrders = (int) $pdo->query('SELECT COUNT(*) AS total FROM orders')->fetch()['total'];
 $pendingOrders = (int) $pdo->query("SELECT COUNT(*) AS total FROM orders WHERE status = 'pending'")->fetch()['total'];
 $totalRevenue = (float) $pdo->query('SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders')->fetch()['total'];
