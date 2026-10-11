@@ -1,70 +1,73 @@
 <?php
-require __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../includes/auth.php';
+requireRole(['admin', 'ceo', 'manager', 'sales-controller']);
 
-if (!is_logged_in()) {
-    redirect('/public/login.php');
+global $pdo;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'], $_POST['order_id'])) {
+    $status = $_POST['status'];
+    $orderId = $_POST['order_id'];
+    $stmt = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+    $stmt->execute([$status, $orderId]);
 }
 
-$user = $_SESSION['user'];
-$orders = [];
-
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 10");
-$stmt->execute(['user_id' => $user['id']]);
+$stmt = $pdo->query(
+    'SELECT o.*, u.name AS customer_name FROM orders o JOIN users u ON u.id = o.user_id ORDER BY o.created_at DESC'
+);
 $orders = $stmt->fetchAll();
 
-$resellerRequest = $pdo->prepare("SELECT * FROM reseller_requests WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1");
-$resellerRequest->execute(['user_id' => $user['id']]);
-$reseller = $resellerRequest->fetch();
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<?php require __DIR__ . '/../includes/header.php'; ?>
 
 <div class="container py-5">
-    <h2 class="mb-4"><?= __('dashboard') ?></h2>
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="sidebar-card">
-                <h5><?= __('profile') ?></h5>
-                <p class="mb-1"><strong>Name:</strong> <?= htmlspecialchars($user['name']) ?></p>
-                <p class="mb-1"><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></p>
-                <p class="mb-1"><strong>Role:</strong> <?= htmlspecialchars($user['role']) ?></p>
-                <div class="mt-3 d-grid gap-2">
-                    <a href="/public/settings.php" class="btn btn-outline-primary btn-sm">Edit Profile</a>
-                    <?php if (!$reseller): ?>
-                        <a href="/public/become-reseller.php" class="btn btn-outline-success btn-sm">Become Reseller</a>
-                    <?php else: ?>
-                        <a href="/public/become-reseller.php" class="btn btn-outline-secondary btn-sm">Reseller Status: <?= htmlspecialchars($reseller['status']) ?></a>
-                    <?php endif; ?>
-                </div>
-            </div>
+    <div class="row">
+        <div class="col-12">
+            <h2>Order Management</h2>
         </div>
+    </div>
 
-        <div class="col-lg-8">
-            <div class="sidebar-card">
-                <h5><?= __('orders') ?></h5>
-                <?php if (!$orders): ?>
-                    <div class="alert alert-info mb-0">No orders yet.</div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
-                            <thead>
-                                <tr><th>ID</th><th>Total</th><th>Status</th><th>Date</th></tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($orders as $order): ?>
-                                    <tr>
-                                        <td>#<?= (int)$order['id'] ?></td>
-                                        <td><?= pretty_money($order['total_amount']) ?></td>
-                                        <td><?= htmlspecialchars($order['status']) ?></td>
-                                        <td><?= htmlspecialchars($order['created_at']) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orders as $order): ?>
+                            <tr>
+                                <td>#<?= $order['id'] ?></td>
+                                <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                                <td>$<?= number_format((float) $order['total_amount'], 2) ?></td>
+                                <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                                <td><?= ucfirst($order['status']) ?></td>
+                                <td>
+                                    <form method="POST" class="d-flex gap-2">
+                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                        <select name="status" class="form-select form-select-sm">
+                                            <option value="pending" <?= $order['status'] === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                            <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
+                                            <option value="shipped" <?= $order['status'] === 'shipped' ? 'selected' : '' ?>>Shipped</option>
+                                            <option value="delivered" <?= $order['status'] === 'delivered' ? 'selected' : '' ?>>Delivered</option>
+                                            <option value="cancelled" <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                                        </select>
+                                        <button class="btn btn-primary btn-sm">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

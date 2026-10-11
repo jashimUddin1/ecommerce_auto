@@ -1,137 +1,70 @@
-CREATE DATABASE IF NOT EXISTS shopamar;
-USE shopamar;
+<?php
+require_once __DIR__ . '/../config/config.php';
 
-CREATE TABLE IF NOT EXISTS roles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $phone = trim($_POST['phone']);
+    $password = $_POST['password'];
 
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    phone VARCHAR(30) NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'user',
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    if ($name === '' || $email === '' || $password === '') {
+        $error = 'Please fill all required fields.';
+    } else {
+        $check = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        $check->execute([$email]);
 
-CREATE TABLE IF NOT EXISTS categories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    slug VARCHAR(150) NOT NULL,
-    description TEXT,
-    image VARCHAR(255) NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+        if ($check->fetch()) {
+            $error = 'This email already exists.';
+        } else {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare(
+                "INSERT INTO users (name, email, phone, password, role_id, status, language)
+                 VALUES (?, ?, ?, ?, (SELECT id FROM roles WHERE name = 'user'), 'active', 'en')"
+            );
+            $stmt->execute([$name, $email, $phone, $hash]);
+            $success = 'Registration successful. Please login.';
+        }
+    }
+}
 
-CREATE TABLE IF NOT EXISTS products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    category_id INT NULL,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL,
-    short_description TEXT,
-    description TEXT,
-    price DECIMAL(12,2) NOT NULL DEFAULT 0,
-    stock INT DEFAULT 0,
-    image VARCHAR(255) NULL,
-    is_featured TINYINT(1) DEFAULT 0,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
-);
+require_once __DIR__ . '/../includes/header.php';
+?>
 
-CREATE TABLE IF NOT EXISTS coupons (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(50) NOT NULL UNIQUE,
-    discount_type ENUM('percent', 'flat') DEFAULT 'percent',
-    discount_value DECIMAL(10,2) NOT NULL,
-    min_order_amount DECIMAL(10,2) DEFAULT 0,
-    expiry_date DATE NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h3 class="mb-4 text-center">Register</h3>
+                    <?php if (isset($error)): ?>
+                        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                    <?php endif; ?>
+                    <?php if (isset($success)): ?>
+                        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+                    <?php endif; ?>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label>Name</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Phone</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <button class="btn btn-primary w-100">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-CREATE TABLE IF NOT EXISTS orders (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    status VARCHAR(50) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS order_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL DEFAULT 1,
-    unit_price DECIMAL(12,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
-);
-
-CREATE TABLE IF NOT EXISTS reseller_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    business_name VARCHAR(255) NULL,
-    phone VARCHAR(30) NULL,
-    notes TEXT NULL,
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS settings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    site_name VARCHAR(150) DEFAULT 'shopAmar',
-    currency VARCHAR(10) DEFAULT 'BDT',
-    default_language VARCHAR(10) DEFAULT 'en',
-    smtp_host VARCHAR(255) NULL,
-    smtp_user VARCHAR(255) NULL,
-    smtp_pass VARCHAR(255) NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-INSERT INTO roles (name, description) VALUES
-('ceo', 'Full control and role management'),
-('manager', 'Limited management access'),
-('support', 'User and reseller support access'),
-('data-entry', 'Product and category entry support'),
-('page-editor', 'Blog and content management'),
-('sales-controller', 'Sales monitoring and order control'),
-('inventory-manager', 'Inventory oversight')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
-INSERT INTO users (name, email, password, role) VALUES
-('Admin User', 'admin@shopamar.com', 'admin123', 'ceo')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
-
-INSERT INTO categories (name, slug, description) VALUES
-('Men Fashion', 'men-fashion', 'Men clothing and fashion items'),
-('Women Fashion', 'women-fashion', 'Women clothing and accessories'),
-('Kids Collection', 'kids-collection', 'Children apparel and costumes')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
-INSERT INTO products (category_id, name, slug, short_description, description, price, stock, is_featured, is_active) VALUES
-(1, 'Classic Cotton Shirt', 'classic-cotton-shirt', 'Comfortable daily wear', 'Premium cotton shirt for everyday use and office styling.', 1290.00, 25, 1, 1),
-(2, 'Elegant Dress', 'elegant-dress', 'Fashion forward design', 'Elegant and stylish dress suitable for events and casual outings.', 2490.00, 18, 1, 1),
-(3, 'Kids Hoodie', 'kids-hoodie', 'Warm and soft hoodie', 'Soft, warm kids hoodie with a comfortable fit and playful look.', 990.00, 30, 0, 1)
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
-INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, expiry_date) VALUES
-('WELCOME10', 'percent', 10.00, 1000.00, '2026-12-31'),
-('FLAT500', 'flat', 500.00, 2500.00, '2026-12-31')
-ON DUPLICATE KEY UPDATE code = VALUES(code);
-
-INSERT INTO settings (site_name, currency, default_language) VALUES
-('shopAmar', 'BDT', 'en')
-ON DUPLICATE KEY UPDATE site_name = VALUES(site_name);
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

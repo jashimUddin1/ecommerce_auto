@@ -1,65 +1,93 @@
 <?php
-require __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../includes/auth.php';
+requireRole(['admin', 'ceo', 'manager']);
 
-if (!is_logged_in()) redirect('/public/login.php');
-if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'sales-controller'], true)) redirect('/public/account.php');
-
-$id = (int)($_GET['id'] ?? 0);
-if (!$id) redirect('/admin/orders.php');
-
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
-$stmt->execute(['id' => $id]);
-$order = $stmt->fetch();
-if (!$order) redirect('/admin/orders.php');
-
-$error = '';
-$success = '';
+global $pdo;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $status = trim($_POST['status'] ?? 'pending');
-    $allowed = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-    if (!in_array($status, $allowed, true)) {
-        $error = 'Invalid order status.';
-    } else {
-        $stmt = $pdo->prepare("UPDATE orders SET status = :status WHERE id = :id");
-        $stmt->execute(['status' => $status, 'id' => $id]);
-        $success = 'Order status updated.';
-        $order['status'] = $status;
+    $code = trim($_POST['code']);
+    $type = $_POST['type'];
+    $value = $_POST['value'];
+    $minPurchase = $_POST['min_purchase'] ?: 0;
+    $expiryDate = $_POST['expiry_date'];
+
+    if ($code !== '') {
+        $stmt = $pdo->prepare('INSERT INTO coupons (code, type, value, min_purchase, expiry_date, status) VALUES (?, ?, ?, ?, ?, "active")');
+        $stmt->execute([$code, $type, $value, $minPurchase, $expiryDate]);
     }
 }
+
+$coupons = $pdo->query('SELECT * FROM coupons ORDER BY id DESC')->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Order Status</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
-</head>
-<body>
+
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-5">
-            <div class="form-box">
-                <h2 class="mb-4">Update Order #<?= (int)$id ?></h2>
-                <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
-                <?php if ($success): ?><div class="alert alert-success"><?= htmlspecialchars($success) ?></div><?php endif; ?>
-                <form method="post">
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-control">
-                            <?php foreach (['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $statusOption): ?>
-                                <option value="<?= $statusOption ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= ucfirst($statusOption) ?></option>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Add Coupon</h4>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label>Code</label>
+                            <input type="text" name="code" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Type</label>
+                            <select name="type" class="form-select">
+                                <option value="percent">Percent</option>
+                                <option value="fixed">Fixed</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Value</label>
+                            <input type="number" step="0.01" name="value" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Minimum Purchase</label>
+                            <input type="number" step="0.01" name="min_purchase" class="form-control" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <label>Expiry Date</label>
+                            <input type="date" name="expiry_date" class="form-control">
+                        </div>
+                        <button class="btn btn-primary w-100">Save Coupon</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Coupon List</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Min Purchase</th>
+                                <th>Expiry</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($coupons as $coupon): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($coupon['code']) ?></td>
+                                    <td><?= htmlspecialchars($coupon['type']) ?></td>
+                                    <td><?= $coupon['value'] ?></td>
+                                    <td><?= number_format((float) $coupon['min_purchase'], 2) ?></td>
+                                    <td><?= htmlspecialchars($coupon['expiry_date'] ?? 'N/A') ?></td>
+                                </tr>
                             <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                    <a href="/admin/orders.php" class="btn btn-secondary">Back</a>
-                </form>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

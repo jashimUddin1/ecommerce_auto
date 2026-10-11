@@ -1,76 +1,80 @@
 <?php
-require __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../config/config.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
-    foreach ($_POST['qty'] as $productId => $qty) {
-        $productId = (int)$productId;
-        $qty = max(0, (int)$qty);
-        if ($qty <= 0) {
-            unset($_SESSION['cart'][$productId]);
-        } else {
-            $_SESSION['cart'][$productId] = $qty;
-        }
-    }
+if (!isLoggedIn()) {
+    redirect('/public/login.php');
 }
 
-$cart = $_SESSION['cart'] ?? [];
-$cartProducts = [];
+$userId = $_SESSION['user_id'];
+$stmt = $pdo->prepare(
+    "SELECT ci.*, p.name_en, p.price, p.id AS product_id
+     FROM cart_items ci
+     JOIN carts c ON c.id = ci.cart_id
+     JOIN products p ON p.id = ci.product_id
+     WHERE c.user_id = ?"
+);
+$stmt->execute([$userId]);
+$items = $stmt->fetchAll();
+
 $total = 0;
-
-if ($cart) {
-    $ids = implode(',', array_map('intval', array_keys($cart)));
-    if ($ids) {
-        $stmt = $pdo->query("SELECT * FROM products WHERE id IN ({$ids}) AND is_active = 1");
-        $cartProducts = $stmt->fetchAll();
-        foreach ($cartProducts as $product) {
-            $qty = $cart[$product['id']] ?? 0;
-            $total += $product['price'] * $qty;
-        }
-    }
+foreach ($items as $item) {
+    $total += (float) $item['price'] * (int) $item['quantity'];
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $paymentMethod = $_POST['payment_method'] ?? 'cod';
+    $shippingFee = 10.00;
+    $finalTotal = $total + $shippingFee;
+
+    $insertOrder = $pdo->prepare(
+        'INSERT INTO orders (user_id, total_amount, shipping_fee, payment_method, status) VALUES (?, ?, ?, ?, "pending")'
+    );
+    $insertOrder->execute([$userId, $finalTotal, $shippingFee, $paymentMethod]);
+
+    $orderId = (int) $pdo->lastInsertId();
+    foreach ($items as $item) {
+        $insertOrderItem = $pdo->prepare(
+            'INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)'
+        );
+        $insertOrderItem->execute([$orderId, $item['product_id'], $item['quantity'], $item['price']]);
+    }
+
+    $clearCart = $pdo->prepare('DELETE FROM cart_items WHERE cart_id = (SELECT id FROM carts WHERE user_id = ?)');
+    $clearCart->execute([$userId]);
+
+    redirect('/user/dashboard.php');
+}
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<?php require __DIR__ . '/../includes/header.php'; ?>
 
 <div class="container py-5">
-    <h1 class="mb-4"><?= __('cart') ?></h1>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3>Checkout</h3>
+                    <p>Subtotal: $<?= number_format($total, 2) ?></p>
+                    <p>Shipping: $10.00</p>
+                    <p>Total: $<?= number_format($total + 10, 2) ?></p>
 
-    <?php if (empty($cartProducts)): ?>
-        <div class="alert alert-info">Your cart is empty.</div>
-    <?php else: ?>
-        <form method="post">
-            <div class="table-responsive">
-                <table class="table table-bordered bg-white">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Qty</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($cartProducts as $product): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($product['name']) ?></td>
-                                <td><?= pretty_money($product['price']) ?></td>
-                                <td>
-                                    <input type="number" name="qty[<?= (int)$product['id'] ?>]" value="<?= (int)($cart[$product['id']] ?? 0) ?>" class="form-control" min="0">
-                                </td>
-                                <td><?= pretty_money($product['price'] * ($cart[$product['id']] ?? 0)) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label>Payment Method</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="cod">Cash on Delivery</option>
+                                <option value="bkash">Bkash</option>
+                                <option value="nagad">Nagad</option>
+                                <option value="rocket">Rocket</option>
+                                <option value="sslcommerz">SSLCommerz</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Place Order</button>
+                    </form>
+                </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <button type="submit" name="update_cart" class="btn btn-outline-primary">Update Cart</button>
-                <div class="h4 mb-0">Total: <?= pretty_money($total) ?></div>
-            </div>
-            <div class="mt-3">
-                <a href="/public/checkout.php" class="btn btn-success btn-lg"><?= __('checkout') ?></a>
-            </div>
-        </form>
-    <?php endif; ?>
+        </div>
+    </div>
 </div>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

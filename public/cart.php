@@ -1,48 +1,74 @@
 <?php
-require __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../config/config.php';
 
-$id = (int)($_GET['id'] ?? 0);
-$product = null;
-
-if ($id > 0) {
-    $stmt = $pdo->prepare("SELECT * FROM products WHERE id = :id AND is_active = 1 LIMIT 1");
-    $stmt->execute(['id' => $id]);
-    $product = $stmt->fetch();
+if (!isLoggedIn()) {
+    redirect('/public/login.php');
 }
 
-if (!$product) {
-    redirect('/public/products.php');
+$userId = $_SESSION['user_id'];
+$stmt = $pdo->prepare(
+    "SELECT ci.*, p.name_en, p.price
+     FROM cart_items ci
+     JOIN carts c ON c.id = ci.cart_id
+     JOIN products p ON p.id = ci.product_id
+     WHERE c.user_id = ?"
+);
+$stmt->execute([$userId]);
+$items = $stmt->fetchAll();
+
+$total = 0;
+foreach ($items as $item) {
+    $total += (float) $item['price'] * (int) $item['quantity'];
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    $qty = max(1, (int)($_POST['qty'] ?? 1));
-    $_SESSION['cart'][$id] = ($_SESSION['cart'][$id] ?? 0) + $qty;
-    redirect('/public/cart.php');
-}
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<?php require __DIR__ . '/../includes/header.php'; ?>
 
 <div class="container py-5">
-    <div class="row g-4 align-items-center">
-        <div class="col-lg-6">
-            <img src="<?= !empty($product['image']) ? $product['image'] : 'https://placehold.co/900x900?text=Product' ?>" class="img-fluid rounded-3" alt="<?= htmlspecialchars($product['name']) ?>">
-        </div>
-        <div class="col-lg-6">
-            <h1><?= htmlspecialchars($product['name']) ?></h1>
-            <div class="price-tag fs-3 mb-3"><?= pretty_money($product['price']) ?></div>
-            <p><?= htmlspecialchars($product['description'] ?? 'Product description') ?></p>
-            <div class="mb-3">
-                <strong><?= __('stock') ?>:</strong> <?= (int)$product['stock'] ?>
-            </div>
-            <form method="post">
-                <div class="input-group mb-3" style="max-width: 180px;">
-                    <span class="input-group-text">Qty</span>
-                    <input type="number" name="qty" value="1" min="1" class="form-control">
-                </div>
-                <button name="add_to_cart" class="btn btn-primary btn-lg"><?= __('add_to_cart') ?></button>
-            </form>
+    <div class="row">
+        <div class="col-12">
+            <h2>Shopping Cart</h2>
         </div>
     </div>
+
+    <?php if (empty($items)): ?>
+        <div class="alert alert-info mt-3">Your cart is empty.</div>
+    <?php else: ?>
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($items as $item): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($item['name_en']) ?></td>
+                            <td>$<?= number_format((float) $item['price'], 2) ?></td>
+                            <td><?= $item['quantity'] ?></td>
+                            <td>$<?= number_format((float) $item['price'] * (int) $item['quantity'], 2) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row justify-content-end">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Total</h5>
+                        <h3>$<?= number_format($total, 2) ?></h3>
+                        <a href="/public/checkout.php" class="btn btn-primary w-100 mt-3">Checkout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,39 +1,33 @@
 # shopAmar
 
-A responsive multi-role e-commerce website built with PHP, MySQL, Bootstrap, and multilingual support for Bangla and English.
-
-## Features
-- Visitor, user, reseller, and admin panels
-- Bangla + English language toggle
-- Responsive mobile + desktop UI
-- Product, category, coupon, order, and role management
-- Basic authentication and role-based access structure
-- MySQL schema for core e-commerce entities
+A PHP + MySQL + Bootstrap e-commerce application with:
+- Bangla + English language support
+- Responsive mobile + desktop design
+- Visitor, User, Reseller, and Admin roles
+- Admin management modules for products, categories, orders, coupons, and roles
 
 ## Tech Stack
-- PHP 8+
+- PHP
 - MySQL
 - Bootstrap 5
-- HTML, CSS, JavaScript
+- HTML/CSS/JavaScript
 
-## Project Structure
-- `public/` – public storefront pages
-- `admin/` – admin dashboard and management screens
-- `includes/` – shared layout and auth helpers
-- `config/` – DB and app configuration
-- `db/` – SQL schema
-- `assets/` – CSS and JS
-
-## Quick Setup
+## Project Setup
 1. Create a MySQL database named `shopamar`.
-2. Import `db/schema.sql`.
-3. Update database credentials in `config/database.php`.
-4. Put the project in a PHP-enabled web server root.
-5. Open `http://localhost/` or your configured virtual host.
+2. Import `database/shopamar.sql`.
+3. Update database credentials in `config/config.php`.
+4. Serve the project using Apache, Nginx, or PHP built-in server.
 
-## Default Admin Login
-- Email: `admin@shopamar.com`
-- Password: `admin123`
+## Main Routes
+- `/public/index.php`
+- `/public/login.php`
+- `/public/register.php`
+- `/public/products.php`
+- `/public/cart.php`
+- `/public/checkout.php`
+- `/admin/dashboard.php`
+- `/user/dashboard.php`
+- `/reseller/dashboard.php`
 
 ## Notes
-This is a solid starting scaffold for your project. You can extend it with payment integrations, invoice generation, image upload, and more advanced admin permissions.
+This is a starter implementation for the requested multi-role ecommerce platform.

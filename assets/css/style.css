@@ -1,78 +1,44 @@
 body {
-    background: #f7f7f7;
+    background: #f5f7fb;
     font-family: Arial, sans-serif;
 }
 
-.hero {
-    background: linear-gradient(135deg, #0d6efd, #212529);
-    color: #fff;
-    padding: 80px 0;
-    border-radius: 18px;
+.navbar {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-.card-product {
-    border: 1px solid #e5e5e5;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #fff;
-    transition: transform 0.2s ease;
+.card {
+    border: none;
+    border-radius: 14px;
 }
 
-.card-product:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+.btn {
+    border-radius: 10px;
 }
 
-.card-product img {
-    height: 220px;
-    object-fit: cover;
-}
-
-.price-tag {
-    color: #198754;
+h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
-    font-size: 1.2rem;
 }
 
-.form-box {
-    background: #fff;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+.table th, .table td {
+    vertical-align: middle;
 }
 
-.sidebar-card {
-    background: #fff;
-    border: 1px solid #ebebeb;
-    border-radius: 12px;
-    padding: 18px;
-}
-
-.admin-nav a {
-    display: block;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    color: #333;
-    text-decoration: none;
-}
-
-.admin-nav a:hover,
-.admin-nav a.active {
-    background: #0d6efd;
-    color: #fff;
-}
-
-.mobile-menu {
-    display: none;
+.container {
+    max-width: 1200px;
 }
 
 @media (max-width: 768px) {
-    .hero {
-        padding: 50px 0;
+    .navbar-brand {
+        font-size: 1.2rem;
     }
 
-    .mobile-menu {
-        display: block;
+    .card-body {
+        padding: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 8px;
     }
 }

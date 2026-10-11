@@ -1,79 +1,102 @@
 <?php
-require __DIR__ . '/../config/init.php';
-if (!is_logged_in()) redirect('/public/login.php');
-if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'data-entry'], true)) redirect('/public/account.php');
+require_once __DIR__ . '/../includes/auth.php';
+requireRole(['admin', 'ceo', 'manager', 'data-entry']);
 
-$products = $pdo->query("SELECT * FROM products ORDER BY created_at DESC")->fetchAll();
+global $pdo;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $categoryId = $_POST['category_id'] ?? null;
+    $nameEn = trim($_POST['name_en']);
+    $nameBn = trim($_POST['name_bn']);
+    $price = $_POST['price'];
+    $stock = $_POST['stock'] ?? 0;
+
+    if ($categoryId && $nameEn && $nameBn && $price) {
+        $slug = strtolower(str_replace(' ', '-', $nameEn));
+        $stmt = $pdo->prepare(
+            'INSERT INTO products (category_id, name_en, name_bn, slug, short_desc_en, short_desc_bn, price, stock, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "active")'
+        );
+        $stmt->execute([$categoryId, $nameEn, $nameBn, $slug, $nameEn, $nameBn, $price, $stock]);
+    }
+}
+
+$categories = $pdo->query('SELECT * FROM categories ORDER BY id DESC')->fetchAll();
+$products = $pdo->query(
+    'SELECT p.*, c.name_en AS category_name FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.id DESC'
+)->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
-</head>
-<body>
-<div class="container-fluid">
+
+<div class="container py-5">
     <div class="row">
-        <aside class="col-md-3 bg-dark text-white min-vh-100 p-3">
-            <h3 class="mb-4">shopAmar</h3>
-            <nav class="admin-nav">
-                <a href="/admin/index.php">Dashboard</a>
-                <a href="/admin/users.php">User Management</a>
-                <a class="active" href="/admin/products.php">Product Management</a>
-                <a href="/admin/categories.php">Category Management</a>
-                <a href="/admin/orders.php">Order Management</a>
-                <a href="/admin/coupons.php">Coupon Management</a>
-                <a href="/admin/resellers.php">Reseller Management</a>
-                <a href="/admin/roles.php">Admin Role Management</a>
-                <a href="/admin/settings.php">Site Settings</a>
-                <a href="/public/logout.php">Logout</a>
-            </nav>
-        </aside>
-        <main class="col-md-9 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Product Management</h2>
-                <a href="/admin/product-add.php" class="btn btn-primary">+ Add Product</a>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Add Product</h4>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label>Category</label>
+                            <select name="category_id" class="form-select" required>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name_en']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Product Name (EN)</label>
+                            <input type="text" name="name_en" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Product Name (BN)</label>
+                            <input type="text" name="name_bn" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Price</label>
+                            <input type="number" step="0.01" name="price" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Stock</label>
+                            <input type="number" name="stock" class="form-control" value="0">
+                        </div>
+                        <button class="btn btn-primary w-100">Save Product</button>
+                    </form>
+                </div>
             </div>
-            <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
-            <?php endif; ?>
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
-            <?php endif; ?>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td><?= (int)$product['id'] ?></td>
-                                <td><?= htmlspecialchars($product['name']) ?></td>
-                                <td><?= pretty_money($product['price']) ?></td>
-                                <td><?= (int)$product['stock'] ?></td>
-                                <td><span class="badge <?= $product['is_active'] ? 'bg-success' : 'bg-danger' ?>"><?= $product['is_active'] ? 'Active' : 'Inactive' ?></span></td>
-                                <td>
-                                    <a href="/admin/product-edit.php?id=<?= (int)$product['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
-                                    <a href="/admin/product-delete.php?id=<?= (int)$product['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Product List</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($products as $product): ?>
+                                    <tr>
+                                        <td><?= $product['id'] ?></td>
+                                        <td><?= htmlspecialchars($product['name_en']) ?></td>
+                                        <td><?= htmlspecialchars($product['category_name']) ?></td>
+                                        <td>$<?= number_format((float) $product['price'], 2) ?></td>
+                                        <td><?= $product['stock'] ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </main>
+        </div>
     </div>
 </div>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

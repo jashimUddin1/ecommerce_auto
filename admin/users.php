@@ -1,84 +1,56 @@
 <?php
-require __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../includes/auth.php';
+requireRole(['admin', 'ceo', 'manager', 'support']);
 
-if (!is_logged_in()) {
-    redirect('/public/login.php');
-}
+global $pdo;
+$stmt = $pdo->query(
+    "SELECT u.*, r.name AS role_name
+     FROM users u
+     JOIN roles r ON r.id = u.role_id
+     ORDER BY u.id DESC"
+);
+$users = $stmt->fetchAll();
 
-if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'support', 'data-entry', 'page-editor', 'sales-controller', 'inventory-manager'], true)) {
-    redirect('/public/account.php');
-}
-
-$totalUsers = (int)($pdo->query("SELECT COUNT(*) FROM users")->fetchColumn());
-$totalOrders = (int)($pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn());
-$totalProducts = (int)($pdo->query("SELECT COUNT(*) FROM products")->fetchColumn());
-$totalRevenue = (float)($pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders")->fetchColumn());
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
-</head>
-<body>
-<div class="container-fluid">
+
+<div class="container py-5">
     <div class="row">
-        <aside class="col-md-3 bg-dark text-white min-vh-100 p-3">
-            <h3 class="mb-4">shopAmar</h3>
-            <nav class="admin-nav">
-                <a class="active" href="/admin/index.php">Dashboard</a>
-                <a href="/admin/users.php">User Management</a>
-                <a href="/admin/products.php">Product Management</a>
-                <a href="/admin/categories.php">Category Management</a>
-                <a href="/admin/orders.php">Order Management</a>
-                <a href="/admin/coupons.php">Coupon Management</a>
-                <a href="/admin/resellers.php">Reseller Management</a>
-                <a href="/admin/roles.php">Admin Role Management</a>
-                <a href="/admin/settings.php">Site Settings</a>
-                <a href="/public/logout.php">Logout</a>
-            </nav>
-        </aside>
-        <main class="col-md-9 p-4">
-            <h2 class="mb-4">Admin Dashboard</h2>
-            <div class="row g-4">
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6>Total Users</h6>
-                            <h3><?= $totalUsers ?></h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6>Total Orders</h6>
-                            <h3><?= $totalOrders ?></h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6>Products</h6>
-                            <h3><?= $totalProducts ?></h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6>Revenue</h6>
-                            <h3><?= pretty_money($totalRevenue) ?></h3>
-                        </div>
-                    </div>
-                </div>
+        <div class="col-12 mb-3">
+            <h2>User Management</h2>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($users as $user): ?>
+                            <tr>
+                                <td><?= $user['id'] ?></td>
+                                <td><?= htmlspecialchars($user['name']) ?></td>
+                                <td><?= htmlspecialchars($user['email']) ?></td>
+                                <td><?= htmlspecialchars($user['phone'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($user['role_name']) ?></td>
+                                <td><?= htmlspecialchars($user['status']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
-        </main>
+        </div>
     </div>
 </div>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

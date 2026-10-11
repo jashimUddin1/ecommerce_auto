@@ -1,18 +1,32 @@
-    <footer class="bg-dark text-white mt-5 py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><?= __('shopamar') ?></h5>
-                    <p class="mb-0">Luxury, everyday fashion and trending products.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">© <?= date('Y') ?> shopAmar</p>
-                </div>
-            </div>
-        </div>
-    </footer>
+<?php
+require_once __DIR__ . '/../config/config.php';
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/js/app.js"></script>
-</body>
-</html>
+function requireLogin(): void {
+    if (!isLoggedIn()) {
+        redirect('/public/login.php');
+    }
+}
+
+function requireRole(array $allowedRoles): void {
+    requireLogin();
+    $role = currentUserRole();
+    if (!in_array($role, $allowedRoles, true)) {
+        redirect('/public/index.php');
+    }
+}
+
+function currentUser(): ?array {
+    global $pdo;
+    if (!isLoggedIn()) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT u.*, r.name AS role_name
+         FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.id = ?"
+    );
+    $stmt->execute([$_SESSION['user_id']]);
+    return $stmt->fetch() ?: null;
+}
