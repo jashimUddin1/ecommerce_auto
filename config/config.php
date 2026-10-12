@@ -20,7 +20,26 @@ try {
     die('Database connection failed: ' . $e->getMessage());
 }
 
+// Determine BASE_URL dynamically. This helps when the project is served from a subdirectory like /ecommerce_auto
+$scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])); // e.g. /ecommerce_auto/public
+$base = rtrim($scriptDir, '/');
+// If served from the "public" folder, remove the trailing /public to get project base
+if (substr($base, -7) === '/public') {
+    $base = substr($base, 0, -7);
+}
+if ($base === '/' || $base === '') {
+    $base = '';
+}
+// BASE_URL will be an empty string for root or '/your_subfolder' when served from a subdirectory
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $base);
+}
+
 function redirect(string $url): void {
+    // If a path-like URL (starting with '/'), prefix it with BASE_URL
+    if (strpos($url, '/') === 0) {
+        $url = BASE_URL . $url;
+    }
     header('Location: ' . $url);
     exit;
 }
@@ -35,8 +54,4 @@ function currentUserRole(): string {
 
 function currentUserId(): ?int {
     return $_SESSION['user_id'] ?? null;
-}
-
-function formatMoney(float $amount): string {
-    return '$' . number_format($amount, 2);
 }
