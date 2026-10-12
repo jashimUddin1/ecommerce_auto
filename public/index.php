@@ -27,8 +27,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <?= $lang === 'bn' ? 'বাংলা ও ইংরেজি ভাষায় শপিং করুন' : 'Shop in Bangla and English' ?>
             </p>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="/public/products.php" class="btn btn-primary"><?= $lang === 'bn' ? 'পণ্য দেখুন' : 'View Products' ?></a>
-                <a href="/public/register.php" class="btn btn-outline-dark"><?= $lang === 'bn' ? 'নিবন্ধন' : 'Register' ?></a>
+                <a href="<?= BASE_URL ?>/public/products.php" class="btn btn-primary"><?= $lang === 'bn' ? 'পণ্য দেখুন' : 'View Products' ?></a>
+                <a href="<?= BASE_URL ?>/public/register.php" class="btn btn-outline-dark"><?= $lang === 'bn' ? 'নিবন্ধন' : 'Register' ?></a>
             </div>
         </div>
         <div class="col-md-6">
@@ -47,13 +47,13 @@ require_once __DIR__ . '/../includes/header.php';
         <?php foreach ($products as $product): ?>
             <div class="col-md-3 col-sm-6">
                 <div class="card h-100 shadow-sm">
-                    <img src="/assets/images/default.jpg" class="card-img-top" alt="Product Image">
+                    <img src="<?= BASE_URL ?>/assets/images/default.jpg" class="card-img-top" alt="Product Image">
                     <div class="card-body">
                         <h5 class="card-title"><?= htmlspecialchars($product['name_en']) ?></h5>
                         <p class="text-muted small"><?= htmlspecialchars($product['category_name']) ?></p>
                         <div class="d-flex justify-content-between align-items-center">
                             <strong>$<?= number_format((float) $product['price'], 2) ?></strong>
-                            <a href="/public/product.php?id=<?= $product['id'] ?>" class="btn btn-primary btn-sm">View</a>
+                            <a href="<?= BASE_URL ?>/public/product.php?id=<?= $product['id'] ?>" class="btn btn-primary btn-sm">View</a>
                         </div>
                     </div>
                 </div>

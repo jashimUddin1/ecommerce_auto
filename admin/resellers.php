@@ -1,19 +1,68 @@
 <?php
 require __DIR__ . '/../config/init.php';
-
 if (!is_logged_in()) redirect('/public/login.php');
 if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager', 'support'], true)) redirect('/public/account.php');
 
-$id = (int)($_GET['id'] ?? 0);
-$action = $_GET['action'] ?? 'pending';
-if (!$id) redirect('/admin/resellers.php');
-
-$allowed = ['approved', 'rejected', 'pending'];
-if (!in_array($action, $allowed, true)) {
-    redirect('/admin/resellers.php');
-}
-
-$stmt = $pdo->prepare("UPDATE reseller_requests SET status = :status WHERE id = :id");
-$stmt->execute(['status' => $action, 'id' => $id]);
-
-redirect('/admin/resellers.php');
+$resellers = $pdo->query("SELECT rr.*, u.name, u.email FROM reseller_requests rr LEFT JOIN users u ON u.id = rr.user_id ORDER BY rr.created_at DESC")->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reseller Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <aside class="col-md-3 bg-dark text-white min-vh-100 p-3">
+            <h3 class="mb-4">shopAmar</h3>
+            <nav class="admin-nav">
+                <a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a>
+                <a href="<?= BASE_URL ?>/admin/users.php">User Management</a>
+                <a href="<?= BASE_URL ?>/admin/products.php">Product Management</a>
+                <a href="<?= BASE_URL ?>/admin/categories.php">Category Management</a>
+                <a href="<?= BASE_URL ?>/admin/orders.php">Order Management</a>
+                <a href="<?= BASE_URL ?>/admin/coupons.php">Coupon Management</a>
+                <a class="active" href="<?= BASE_URL ?>/admin/resellers.php">Reseller Management</a>
+                <a href="<?= BASE_URL ?>/admin/roles.php">Admin Role Management</a>
+                <a href="<?= BASE_URL ?>/admin/settings.php">Site Settings</a>
+                <a href="<?= BASE_URL ?>/public/logout.php">Logout</a>
+            </nav>
+        </aside>
+        <main class="col-md-9 p-4">
+            <h2 class="mb-4">Reseller Management</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered bg-white">
+                    <thead class="table-dark">
+                        <tr><th>ID</th><th>Name</th><th>Email</th><th>Business</th><th>Phone</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($resellers as $reseller): ?>
+                            <tr>
+                                <td><?= (int)$reseller['id'] ?></td>
+                                <td><?= htmlspecialchars($reseller['name'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($reseller['email'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($reseller['business_name'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($reseller['phone'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($reseller['status']) ?></td>
+                                <td>
+                                    <?php if ($reseller['status'] !== 'approved'): ?>
+                                        <a href="<?= BASE_URL ?>/admin/reseller-action.php?id=<?= (int)$reseller['id'] ?>&action=approved" class="btn btn-sm btn-success">Approve</a>
+                                    <?php endif; ?>
+                                    <?php if ($reseller['status'] !== 'rejected'): ?>
+                                        <a href="<?= BASE_URL ?>/admin/reseller-action.php?id=<?= (int)$reseller['id'] ?>&action=rejected" class="btn btn-sm btn-danger">Reject</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html>

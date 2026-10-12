@@ -27,14 +27,14 @@ $products = $stmt->fetchAll();
         <?php foreach ($products as $product): ?>
             <div class="col-md-3 col-sm-6">
                 <div class="card h-100 shadow-sm">
-                    <img src="/assets/images/default.jpg" class="card-img-top" alt="<?= htmlspecialchars($product['name_en']) ?>">
+                    <img src="<?= BASE_URL ?>/assets/images/default.jpg" class="card-img-top" alt="<?= htmlspecialchars($product['name_en']) ?>">
                     <div class="card-body">
                         <h5><?= htmlspecialchars($product['name_en']) ?></h5>
                         <p class="text-muted small"><?= htmlspecialchars($product['category_name']) ?></p>
                         <p><strong>$<?= number_format((float) $product['price'], 2) ?></strong></p>
                         <div class="d-flex gap-2 flex-wrap">
-                            <a href="/public/product.php?id=<?= $product['id'] ?>" class="btn btn-primary btn-sm">View</a>
-                            <a href="/public/add_to_cart.php?id=<?= $product['id'] ?>" class="btn btn-outline-dark btn-sm">Add to Cart</a>
+                            <a href="<?= BASE_URL ?>/public/product.php?id=<?= $product['id'] ?>" class="btn btn-primary btn-sm">View</a>
+                            <a href="<?= BASE_URL ?>/public/add_to_cart.php?id=<?= $product['id'] ?>" class="btn btn-outline-dark btn-sm">Add to Cart</a>
                         </div>
                     </div>
                 </div>

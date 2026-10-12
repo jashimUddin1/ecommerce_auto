@@ -1,18 +1,10 @@
-<?php
-require __DIR__ . '/../config/init.php';
-if (!is_logged_in()) redirect('/public/login.php');
-if (!user_has_role('ceo') && !in_array($_SESSION['user']['role'], ['manager'], true)) redirect('/public/account.php');
-
-$coupons = $pdo->query("SELECT * FROM coupons ORDER BY created_at DESC")->fetchAll();
-?>
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coupon Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
 </head>
 <body>
 <div class="container-fluid">
@@ -20,54 +12,20 @@ $coupons = $pdo->query("SELECT * FROM coupons ORDER BY created_at DESC")->fetchA
         <aside class="col-md-3 bg-dark text-white min-vh-100 p-3">
             <h3 class="mb-4">shopAmar</h3>
             <nav class="admin-nav">
-                <a href="/admin/index.php">Dashboard</a>
-                <a href="/admin/users.php">User Management</a>
-                <a href="/admin/products.php">Product Management</a>
-                <a href="/admin/categories.php">Category Management</a>
-                <a href="/admin/orders.php">Order Management</a>
-                <a class="active" href="/admin/coupons.php">Coupon Management</a>
-                <a href="/admin/resellers.php">Reseller Management</a>
-                <a href="/admin/roles.php">Admin Role Management</a>
-                <a href="/admin/settings.php">Site Settings</a>
-                <a href="/public/logout.php">Logout</a>
+                <a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a>
+                <a href="<?= BASE_URL ?>/admin/users.php">User Management</a>
+                <a href="<?= BASE_URL ?>/admin/products.php">Product Management</a>
+                <a href="<?= BASE_URL ?>/admin/categories.php">Category Management</a>
+                <a href="<?= BASE_URL ?>/admin/orders.php">Order Management</a>
+                <a class="active" href="<?= BASE_URL ?>/admin/coupons.php">Coupon Management</a>
+                <a href="<?= BASE_URL ?>/admin/resellers.php">Reseller Management</a>
+                <a href="<?= BASE_URL ?>/admin/roles.php">Admin Role Management</a>
+                <a href="<?= BASE_URL ?>/admin/settings.php">Site Settings</a>
+                <a href="<?= BASE_URL ?>/public/logout.php">Logout</a>
             </nav>
         </aside>
         <main class="col-md-9 p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Coupon Management</h2>
-                <a href="/admin/coupon-add.php" class="btn btn-primary">+ Add Coupon</a>
+                <a href="<?= BASE_URL ?>/admin/coupon-add.php" class="btn btn-primary">+ Add Coupon</a>
             </div>
-            <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
-            <?php endif; ?>
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
-            <?php endif; ?>
-            <div class="table-responsive">
-                <table class="table table-bordered bg-white">
-                    <thead class="table-dark">
-                        <tr><th>ID</th><th>Code</th><th>Type</th><th>Value</th><th>Min Order</th><th>Expiry</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($coupons as $coupon): ?>
-                            <tr>
-                                <td><?= (int)$coupon['id'] ?></td>
-                                <td><?= htmlspecialchars($coupon['code']) ?></td>
-                                <td><?= htmlspecialchars($coupon['discount_type']) ?></td>
-                                <td><?= htmlspecialchars($coupon['discount_value']) ?></td>
-                                <td><?= pretty_money($coupon['min_order_amount']) ?></td>
-                                <td><?= htmlspecialchars($coupon['expiry_date']) ?></td>
-                                <td>
-                                    <a href="/admin/coupon-edit.php?id=<?= (int)$coupon['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
-                                    <a href="/admin/coupon-delete.php?id=<?= (int)$coupon['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this coupon?')">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
-</div>
-</body>
-</html>
