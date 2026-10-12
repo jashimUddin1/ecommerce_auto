@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['role'] = $user['role_name'];
 
         if (in_array($user['role_name'], ['admin', 'ceo', 'manager'], true)) {
-            redirect('/admin/dashboard.php');
+            redirect('/ecommerce_auto/admin/dashboard.php');
         }
         if ($user['role_name'] === 'reseller') {
             redirect('/reseller/dashboard.php');
