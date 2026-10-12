@@ -20,27 +20,39 @@ try {
     die('Database connection failed: ' . $e->getMessage());
 }
 
-// Determine BASE_URL dynamically. This helps when the project is served from a subdirectory like /ecommerce_auto
-$scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])); // e.g. /ecommerce_auto/public
-$base = rtrim($scriptDir, '/');
-// If served from the "public" folder, remove the trailing /public to get project base
-if (substr($base, -7) === '/public') {
-    $base = substr($base, 0, -7);
-}
-if ($base === '/' || $base === '') {
+// Determine BASE_URL robustly. This ensures BASE_URL becomes the project root (e.g. /ecommerce_auto)
+// regardless of whether the current script is in /public, /admin, /user, or /reseller folders.
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''); // e.g. /ecommerce_auto/public/index.php
+$scriptDir = dirname($scriptName); // e.g. /ecommerce_auto/public or /ecommerce_auto/admin
+
+// Remove common subfolders to get project root
+$base = preg_replace('#/(public|admin|user|reseller)(/.*)?$#i', '', $scriptDir);
+
+// normalize root
+if ($base === '/' || $base === '.' || $base === '') {
     $base = '';
 }
-// BASE_URL will be an empty string for root or '/your_subfolder' when served from a subdirectory
+
 if (!defined('BASE_URL')) {
     define('BASE_URL', $base);
 }
 
 function redirect(string $url): void {
-    // If a path-like URL (starting with '/'), prefix it with BASE_URL
-    if (strpos($url, '/') === 0) {
-        $url = BASE_URL . $url;
+    // If full URL provided, redirect as-is
+    if (preg_match('#^https?://#i', $url)) {
+        header('Location: ' . $url);
+        exit;
     }
-    header('Location: ' . $url);
+
+    // If path-like URL (starting with '/'), prefix with BASE_URL
+    if (strpos($url, '/') === 0) {
+        $location = BASE_URL . $url;
+    } else {
+        // relative path provided, append to BASE_URL with a slash
+        $location = rtrim(BASE_URL, '/') . '/' . ltrim($url, '/');
+    }
+
+    header('Location: ' . $location);
     exit;
 }
 
